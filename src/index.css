@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', 'Outfit', sans-serif;
+  --font-arabic: 'Amiri', serif;
+  
+  /* Custom vibrant theme colors */
+  --color-brand-50: #f4f7f6;
+  --color-brand-100: #e2edea;
+  --color-brand-200: #c9ded9;
+  --color-brand-300: #a2c6bf;
+  --color-brand-400: #76a79e;
+  --color-brand-500: #588c83;
+  --color-brand-600: #447169;
+  --color-brand-700: #395c57;
+  --color-brand-800: #314c48;
+  --color-brand-900: #2c423f;
+  --color-brand-950: #162624;
+}
+
+/* Custom scrollbars for a premium look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #0b0f19; /* premium deep dark background by default */
+  color: #f1f5f9;
+  overflow-x: hidden;
+}
+
+/* RTL Support */
+[dir="rtl"] {
+  font-family: var(--font-sans);
+}
+
+[dir="rtl"] .arabic-text {
+  font-family: var(--font-arabic);
+}
