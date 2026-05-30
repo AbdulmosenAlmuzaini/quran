@@ -157,7 +157,7 @@ export default function PdfMushafReader({ quranData, surahsData }) {
   // Embed source URL with hash page parameter
   const pdfUrl = useMemo(() => {
     const pageNum = currentPage + pdfOffset;
-    return `https://archive.org/download/Green-standard-39-1441/Green-standard-39-1441.pdf#page=${pageNum}&toolbar=0&navpanes=0&scrollbar=1`;
+    return `/quran.pdf#page=${pageNum}&toolbar=0&navpanes=0&scrollbar=1`;
   }, [currentPage, pdfOffset]);
 
   return (
