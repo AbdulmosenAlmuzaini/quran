@@ -555,10 +555,10 @@ export default function App() {
 
       {/* Elegant Footer */}
       <footer className="w-full py-8 text-center text-xs text-slate-600 border-t border-slate-900 bg-slate-950/40">
-        <p className="font-sans">
-          © {new Date().getFullYear()} Quran Smart Search. Built with React, Tailwind CSS and Uthmani Database.
+        <p className="font-arabic text-sm opacity-80">
+          © {new Date().getFullYear()} الباحث القرآني الذكي. تم التطوير باستخدام React و Tailwind CSS.
         </p>
-        <p className="mt-1 font-arabic text-[11px] opacity-75">
+        <p className="mt-1.5 font-arabic text-[11px] opacity-75">
           صدقة جارية • اللهم تقبل منا ومنكم صالح الأعمال
         </p>
       </footer>
