@@ -291,8 +291,8 @@ export default function App() {
       <nav className="sticky top-0 z-50 bg-[#090d16]/80 backdrop-blur-md border-b border-slate-900 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-emerald-400" />
-          <span className="font-sans font-extrabold tracking-wide text-sm bg-gradient-to-r from-slate-200 to-emerald-300 bg-clip-text text-transparent">
-            QURAN SMART SEARCH
+          <span className="font-arabic font-extrabold text-lg bg-gradient-to-r from-slate-100 to-emerald-300 bg-clip-text text-transparent">
+            الباحث القرآني الذكي
           </span>
         </div>
 
