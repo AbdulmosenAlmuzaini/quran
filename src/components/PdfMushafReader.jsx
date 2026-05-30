@@ -4,7 +4,7 @@ import { Bookmark, BookOpen, ChevronRight, ChevronLeft, Settings, Compass, Searc
 export default function PdfMushafReader({ quranData, surahsData }) {
   // Page Navigation State
   const [currentPage, setCurrentPage] = useState(1);
-  const [pdfOffset, setPdfOffset] = useState(0);
+  const [pdfOffset, setPdfOffset] = useState(4);
   const [pageInput, setPageInput] = useState('1');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -157,7 +157,7 @@ export default function PdfMushafReader({ quranData, surahsData }) {
   // Embed source URL with hash page parameter
   const pdfUrl = useMemo(() => {
     const pageNum = currentPage + pdfOffset;
-    return `/quran.pdf#page=${pageNum}&toolbar=0&navpanes=0&scrollbar=1`;
+    return `https://archive.org/download/Green-standard-39-1441/Green-standard-39-1441.pdf#page=${pageNum}&toolbar=0&navpanes=0&scrollbar=1`;
   }, [currentPage, pdfOffset]);
 
   return (
@@ -381,12 +381,12 @@ export default function PdfMushafReader({ quranData, surahsData }) {
                   </div>
                   <button
                     onClick={() => {
-                      setPdfOffset(0);
-                      localStorage.setItem('quran_pdf_offset', '0');
+                      setPdfOffset(4);
+                      localStorage.setItem('quran_pdf_offset', '4');
                     }}
                     className="w-full text-center mt-2.5 text-[8px] font-bold text-rose-400 hover:text-rose-300 transition-all cursor-pointer"
                   >
-                    إعادة تعيين الافتراضي (0)
+                    إعادة تعيين الافتراضي (4)
                   </button>
                 </div>
               </div>
