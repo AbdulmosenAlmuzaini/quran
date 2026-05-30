@@ -2,9 +2,18 @@
 
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'UthmanicHafs';
+  src: url('/fonts/UthmanicHafs_v22.ttf') format('truetype'),
+       url('/fonts/uthmanic_hafs_v22.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: 'Inter', 'Outfit', sans-serif;
-  --font-arabic: 'Amiri', serif;
+  --font-arabic: 'UthmanicHafs', 'Amiri', serif;
   
   /* Custom vibrant theme colors */
   --color-brand-50: #f4f7f6;
@@ -53,4 +62,33 @@ body {
 
 [dir="rtl"] .arabic-text {
   font-family: var(--font-arabic);
+}
+
+/* Premium keyframe animations */
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }

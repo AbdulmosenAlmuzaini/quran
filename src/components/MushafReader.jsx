@@ -19,6 +19,35 @@ export default function MushafReader({
   const [bookmark, setBookmark] = useState(null);
   const [justJumped, setJustJumped] = useState(false);
 
+  // View Mode: 'cards' or 'continuous'
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('quran_mushaf_view_mode') || 'continuous';
+  });
+  
+  // Selected Ayah for floating action panel in continuous view
+  const [selectedAyahId, setSelectedAyahId] = useState(null);
+
+  // Quick lookup map of Surah names
+  const surahMap = useMemo(() => {
+    const map = {};
+    surahsData.forEach(s => {
+      map[s.id] = s.name_ar;
+    });
+    return map;
+  }, [surahsData]);
+
+  // Derived selected verse details for continuous mode
+  const activeDetailVerse = useMemo(() => {
+    const activeId = selectedAyahId || playingVerseId;
+    if (!activeId) return null;
+    return quranData.find(v => v.id === activeId);
+  }, [selectedAyahId, playingVerseId, quranData]);
+
+  // Reset selected Ayah when Surah changes
+  useEffect(() => {
+    setSelectedAyahId(null);
+  }, [currentSurahId]);
+
   // Load bookmark on mount
   useEffect(() => {
     const savedBookmark = localStorage.getItem('quran_bookmark');
@@ -202,6 +231,36 @@ export default function MushafReader({
               }`} />
             </button>
           </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-slate-950 border border-slate-850 p-1 rounded-xl">
+            <button
+              onClick={() => {
+                setViewMode('continuous');
+                localStorage.setItem('quran_mushaf_view_mode', 'continuous');
+              }}
+              className={`px-3 py-1.5 text-[11px] font-bold rounded-lg cursor-pointer transition-all ${
+                viewMode === 'continuous'
+                  ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              صفحة متتابعة
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('cards');
+                localStorage.setItem('quran_mushaf_view_mode', 'cards');
+              }}
+              className={`px-3 py-1.5 text-[11px] font-bold rounded-lg cursor-pointer transition-all ${
+                viewMode === 'cards'
+                  ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              بطاقات منفصلة
+            </button>
+          </div>
         </div>
 
         {/* Dynamic Selector of active reciter & Surah */}
@@ -268,102 +327,163 @@ export default function MushafReader({
       )}
 
       {/* Main Mushaf Content: Reading flow */}
-      <div className="w-full flex flex-col gap-4">
-        {surahVerses.map((verse) => {
-          const isPlaying = playingVerseId === verse.id;
-          const isBookmarked = bookmark && bookmark.id === verse.id;
+      {viewMode === 'continuous' ? (
+        <div className="w-full bg-[#0a0f1b]/70 border border-slate-850/80 backdrop-blur-md rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden transition-all duration-300">
+          {/* Elegant gold/emerald thin boundary borders reminiscent of Mushaf frames */}
+          <div className="absolute inset-3 border border-emerald-500/10 rounded-2xl pointer-events-none" />
+          <div className="absolute inset-4 border border-amber-500/5 rounded-2xl pointer-events-none" />
           
-          // Render a clean verse without the Bismillah prefix if it is Al-Fatihah or standard verses
-          // (Since we already render Bismillah in the header, except for Ayah 1 of Surah 1)
-          let verseText = verse.ar;
-          if (currentSurahId === 1 && verse.ayah === 1) {
-            // keep it
-          } else if (verse.ayah === 1 && verseText.startsWith('﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
-            verseText = verseText.replace('﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
-          } else if (verse.ayah === 1 && verseText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
-            verseText = verseText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
-          }
+          <div 
+            className="arabic-text text-right text-slate-100 font-arabic leading-loose tracking-wide w-full select-all font-bold text-justify flex flex-wrap gap-x-1.5 gap-y-3 justify-center"
+            style={{ fontSize: `${fontSize}px`, lineHeight: '2.5', direction: 'rtl' }}
+          >
+            {surahVerses.map((verse) => {
+              const isPlaying = playingVerseId === verse.id;
+              const isBookmarked = bookmark && bookmark.id === verse.id;
+              const isSelected = activeDetailVerse && activeDetailVerse.id === verse.id;
+              
+              // Strip Bismillah if it's the first ayah (except Al-Fatihah, since it's Surah 1)
+              let verseText = verse.ar;
+              if (currentSurahId === 1 && verse.ayah === 1) {
+                // keep
+              } else if (verse.ayah === 1 && verseText.startsWith('﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+                verseText = verseText.replace('﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+              } else if (verse.ayah === 1 && verseText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+                verseText = verseText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+              }
 
-          return (
-            <div
-              key={verse.id}
-              id={`mushaf-ayah-${verse.id}`}
-              className={`w-full bg-[#0a0f1b]/70 backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col gap-4 border transition-all duration-300 relative group overflow-hidden ${
-                isPlaying
-                  ? 'border-emerald-500/60 bg-[#0a0f1b]/95 shadow-[0_0_20px_rgba(16,185,129,0.1)] ring-1 ring-emerald-500/20'
-                  : isBookmarked
-                  ? 'border-amber-500/40 bg-[#0a0f1b]/80 shadow-md ring-1 ring-amber-500/10'
-                  : 'border-slate-900/60 hover:border-slate-800/80 hover:bg-[#0a0f1b]/90'
-              }`}
-            >
-              {/* Background accent glow when active */}
-              {isPlaying && (
-                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-2xl rounded-full opacity-100 transition-opacity pointer-events-none" />
-              )}
-              {isBookmarked && (
-                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 blur-2xl rounded-full opacity-100 transition-opacity pointer-events-none" />
-              )}
+              // Arabic digits converter
+              const toArabicDigits = (num) => {
+                const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+                return num.toString().replace(/\d/g, (x) => arabicDigits[parseInt(x)]);
+              };
 
-              {/* Top Controls Toolbar of each Verse */}
-              <div className="flex items-center justify-between border-b border-slate-900/60 pb-3 flex-row-reverse">
-                {/* Verse indices details */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-slate-900 text-slate-400 border border-slate-850 px-2.5 py-1 rounded-lg">
-                    الآية {verse.ayah}
-                  </span>
-                  <span className="text-[10px] bg-slate-900 text-slate-500 border border-slate-850 px-2.5 py-1 rounded-lg">
-                    الجزء {verse.juz}
-                  </span>
-                </div>
-
-                {/* Audio & Bookmark Action Controls */}
-                <div className="flex items-center gap-2">
-                  {/* Play Recitation Button */}
-                  <button
-                    onClick={() => handlePlayToggle(verse.id)}
-                    className={`p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
-                      isPlaying
-                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse'
-                        : 'bg-slate-950 border-slate-900 hover:border-slate-800 hover:bg-slate-900 text-slate-500 hover:text-emerald-400'
-                    }`}
-                    title={isPlaying ? "إيقاف التلاوة" : "تشغيل التلاوة"}
-                  >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </button>
-
-                  {/* Bookmark Button */}
-                  <button
-                    onClick={() => handleSaveBookmark(verse)}
-                    className={`p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
-                      isBookmarked
-                        ? 'bg-amber-500/25 border-amber-500/50 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
-                        : 'bg-slate-950 border-slate-900 hover:border-slate-800 hover:bg-slate-900 text-slate-500 hover:text-amber-400'
-                    }`}
-                    title="حفظ علامة التوقف عند هذه الآية"
-                  >
-                    <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Calligraphy text display with adjustable font sizing */}
-              <div className="flex items-start justify-end gap-5 py-4 w-full">
-                <p 
-                  className="arabic-text text-right text-slate-100 font-arabic leading-loose tracking-wide w-full font-bold"
-                  style={{ fontSize: `${fontSize}px`, lineHeight: '2.1' }}
+              return (
+                <span
+                  key={verse.id}
+                  id={`mushaf-ayah-${verse.id}`}
+                  onClick={() => {
+                    setSelectedAyahId(verse.id);
+                    // Single click plays/pauses recitation to make it extremely premium
+                    handlePlayToggle(verse.id);
+                  }}
+                  className={`inline cursor-pointer transition-all duration-300 rounded-lg px-2.5 py-0.5 select-all ${
+                    isPlaying 
+                      ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-[pulse_3s_infinite]' 
+                      : isBookmarked
+                      ? 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30'
+                      : isSelected
+                      ? 'bg-slate-800/60 ring-1 ring-slate-700/60 text-slate-100 shadow'
+                      : 'hover:bg-emerald-500/5 hover:text-emerald-400'
+                  }`}
                 >
                   {verseText}
-                </p>
-                {/* Calligraphic Verse Divider */}
-                <div className="flex-shrink-0 w-11 h-11 rounded-full border-2 border-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-400 font-arabic select-none bg-emerald-500/5 mt-1.5">
-                  {verse.ayah}
-                </div>
-              </div>
+                  <span className="text-emerald-400 font-extrabold select-none mr-2 font-arabic font-normal text-[0.8em] inline-block tracking-normal">
+                    {" ﴿"}{toArabicDigits(verse.ayah)}{"﴾ "}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="w-full flex flex-col gap-4">
+          {surahVerses.map((verse) => {
+            const isPlaying = playingVerseId === verse.id;
+            const isBookmarked = bookmark && bookmark.id === verse.id;
+            
+            // Render a clean verse without the Bismillah prefix if it is Al-Fatihah or standard verses
+            // (Since we already render Bismillah in the header, except for Ayah 1 of Surah 1)
+            let verseText = verse.ar;
+            if (currentSurahId === 1 && verse.ayah === 1) {
+              // keep it
+            } else if (verse.ayah === 1 && verseText.startsWith('﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+              verseText = verseText.replace('﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+            } else if (verse.ayah === 1 && verseText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+              verseText = verseText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+            }
 
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={verse.id}
+                id={`mushaf-ayah-${verse.id}`}
+                className={`w-full bg-[#0a0f1b]/70 backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col gap-4 border transition-all duration-300 relative group overflow-hidden ${
+                  isPlaying
+                    ? 'border-emerald-500/60 bg-[#0a0f1b]/95 shadow-[0_0_20px_rgba(16,185,129,0.1)] ring-1 ring-emerald-500/20'
+                    : isBookmarked
+                    ? 'border-amber-500/40 bg-[#0a0f1b]/80 shadow-md ring-1 ring-amber-500/10'
+                    : 'border-slate-900/60 hover:border-slate-800/80 hover:bg-[#0a0f1b]/90'
+                }`}
+              >
+                {/* Background accent glow when active */}
+                {isPlaying && (
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-2xl rounded-full opacity-100 transition-opacity pointer-events-none" />
+                )}
+                {isBookmarked && (
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 blur-2xl rounded-full opacity-100 transition-opacity pointer-events-none" />
+                )}
+
+                {/* Top Controls Toolbar of each Verse */}
+                <div className="flex items-center justify-between border-b border-slate-900/60 pb-3 flex-row-reverse">
+                  {/* Verse indices details */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-slate-900 text-slate-400 border border-slate-850 px-2.5 py-1 rounded-lg">
+                      الآية {verse.ayah}
+                    </span>
+                    <span className="text-[10px] bg-slate-900 text-slate-500 border border-slate-850 px-2.5 py-1 rounded-lg">
+                      الجزء {verse.juz}
+                    </span>
+                  </div>
+
+                  {/* Audio & Bookmark Action Controls */}
+                  <div className="flex items-center gap-2">
+                    {/* Play Recitation Button */}
+                    <button
+                      onClick={() => handlePlayToggle(verse.id)}
+                      className={`p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
+                        isPlaying
+                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse'
+                          : 'bg-slate-950 border-slate-900 hover:border-slate-800 hover:bg-slate-900 text-slate-500 hover:text-emerald-400'
+                      }`}
+                      title={isPlaying ? "إيقاف التلاوة" : "تشغيل التلاوة"}
+                    >
+                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </button>
+
+                    {/* Bookmark Button */}
+                    <button
+                      onClick={() => handleSaveBookmark(verse)}
+                      className={`p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
+                        isBookmarked
+                          ? 'bg-amber-500/25 border-amber-500/50 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                          : 'bg-slate-950 border-slate-900 hover:border-slate-800 hover:bg-slate-900 text-slate-500 hover:text-amber-400'
+                      }`}
+                      title="حفظ علامة التوقف عند هذه الآية"
+                    >
+                      <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Calligraphy text display with adjustable font sizing */}
+                <div className="flex items-start justify-end gap-5 py-4 w-full">
+                  <p 
+                    className="arabic-text text-right text-slate-100 font-arabic leading-loose tracking-wide w-full font-bold"
+                    style={{ fontSize: `${fontSize}px`, lineHeight: '2.1' }}
+                  >
+                    {verseText}
+                  </p>
+                  {/* Calligraphic Verse Divider */}
+                  <div className="flex-shrink-0 w-11 h-11 rounded-full border-2 border-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-400 font-arabic select-none bg-emerald-500/5 mt-1.5">
+                    {verse.ayah}
+                  </div>
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Dynamic Navigation Pagination of Surahs */}
       <div className="w-full flex items-center justify-between py-6 mt-4 border-t border-slate-900/60">
@@ -400,6 +520,92 @@ export default function MushafReader({
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Floating Bottom Translation & Controls Panel */}
+      {activeDetailVerse && (
+        <div className="fixed bottom-4 left-4 right-4 z-40 max-w-4xl mx-auto bg-slate-950/90 border border-emerald-500/30 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col gap-3 transition-all duration-300 animate-slide-up">
+          {/* Header metadata */}
+          <div className="flex items-center justify-between flex-row-reverse border-b border-slate-900 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-slate-900 text-slate-400 border border-slate-800 px-2.5 py-1 rounded-lg">
+                سورة {surahMap[activeDetailVerse.surah]} (الآية {activeDetailVerse.ayah})
+              </span>
+              <span className="text-xs bg-slate-900 text-slate-400 border border-slate-800 px-2.5 py-1 rounded-lg">
+                الجزء {activeDetailVerse.juz}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {/* Close Panel button */}
+              <button 
+                onClick={() => setSelectedAyahId(null)}
+                className="text-xs text-slate-500 hover:text-slate-300 bg-slate-900 hover:bg-slate-850 border border-slate-850 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+          
+          {/* Content details: Arabic, Translation, Transliteration */}
+          <div className="flex flex-col gap-2 text-right">
+            {/* Arabic line (smaller) */}
+            <p className="font-arabic text-lg text-emerald-300 leading-relaxed font-bold">
+              {activeDetailVerse.ar}
+            </p>
+            
+            {/* English translation */}
+            <div className="text-left mt-1 border-t border-slate-900 pt-2 flex flex-col gap-1">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">English Translation</p>
+              <p className="text-xs md:text-sm text-slate-200 font-light leading-relaxed">
+                {activeDetailVerse.en}
+              </p>
+            </div>
+            
+            {/* Phonetic transliteration */}
+            <div className="text-left flex flex-col gap-1">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Transliteration</p>
+              <p className="text-xs text-slate-400 italic font-light leading-relaxed">
+                {activeDetailVerse.trans}
+              </p>
+            </div>
+          </div>
+          
+          {/* Active actions bar */}
+          <div className="flex items-center justify-between border-t border-slate-900 pt-3 mt-1">
+            <div className="flex items-center gap-2">
+              {/* Play / Pause button */}
+              <button
+                onClick={() => handlePlayToggle(activeDetailVerse.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  playingVerseId === activeDetailVerse.id
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                    : 'bg-slate-900 border-slate-850 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/20'
+                }`}
+              >
+                {playingVerseId === activeDetailVerse.id ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{playingVerseId === activeDetailVerse.id ? "إيقاف" : "تشغيل التلاوة"}</span>
+              </button>
+              
+              {/* Bookmark button */}
+              <button
+                onClick={() => handleSaveBookmark(activeDetailVerse)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  bookmark && bookmark.id === activeDetailVerse.id
+                    ? 'bg-amber-500/25 border-amber-500/50 text-amber-400'
+                    : 'bg-slate-900 border-slate-850 text-slate-400 hover:text-amber-400 hover:border-amber-500/20'
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${bookmark && bookmark.id === activeDetailVerse.id ? 'fill-current' : ''}`} />
+                <span>حفظ علامة التوقف</span>
+              </button>
+            </div>
+            
+            <div className="text-[10px] text-slate-500 italic hidden sm:block">
+              انقر على أي آية لتشغيل التلاوة وعرض الترجمة
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
